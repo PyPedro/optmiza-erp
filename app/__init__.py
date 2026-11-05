@@ -227,7 +227,7 @@ with app.app_context():
     colunas_pedido = {coluna['name'] for coluna in inspect(db.engine).get_columns('pedido_compra')}
     if 'data_entrega' not in colunas_pedido:
         with db.engine.begin() as conexao:
-            conexao.exec_driver_sql('ALTER TABLE pedido_compra ADD COLUMN data_entrega DATETIME')
+            conexao.exec_driver_sql('ALTER TABLE pedido_compra ADD COLUMN data_entrega TIMESTAMP')
     colunas_preco = {coluna['name'] for coluna in inspect(db.engine).get_columns('formacao_preco')}
     if 'frete_kg' not in colunas_preco:
         with db.engine.begin() as conexao:
@@ -237,9 +237,9 @@ with app.app_context():
     colunas_usuario = {coluna['name'] for coluna in inspect(db.engine).get_columns('usuario')}
     novas_colunas_usuario = {
         'permissoes_json': 'TEXT',
-        'email_confirmado': 'BOOLEAN NOT NULL DEFAULT 1',
+        'email_confirmado': 'BOOLEAN NOT NULL DEFAULT TRUE',
         'email_confirmacao_token_hash': 'VARCHAR(64)',
-        'email_confirmacao_expira_em': 'DATETIME'
+        'email_confirmacao_expira_em': 'TIMESTAMP'
     }
     for nome_coluna, definicao in novas_colunas_usuario.items():
         if nome_coluna not in colunas_usuario:
@@ -251,7 +251,7 @@ with app.app_context():
         'codigo': 'VARCHAR(50)',
         'uf': "VARCHAR(2) DEFAULT ''",
         'cidade': "VARCHAR(100) DEFAULT ''",
-        'ativo': 'BOOLEAN NOT NULL DEFAULT 1'
+        'ativo': 'BOOLEAN NOT NULL DEFAULT TRUE'
     }
     for nome_coluna, definicao in novas_colunas_fornecedor.items():
         if nome_coluna not in colunas_fornecedor:
@@ -264,7 +264,7 @@ with app.app_context():
             conexao.exec_driver_sql('ALTER TABLE material_planejamento ADD COLUMN item_id INTEGER REFERENCES item(id)')
     if 'eh_demillus' not in colunas_mrp:
         with db.engine.begin() as conexao:
-            conexao.exec_driver_sql('ALTER TABLE material_planejamento ADD COLUMN eh_demillus BOOLEAN NOT NULL DEFAULT 0')
+            conexao.exec_driver_sql('ALTER TABLE material_planejamento ADD COLUMN eh_demillus BOOLEAN NOT NULL DEFAULT FALSE')
     novas_colunas_produto_mrp = {
         'produto_nome': "VARCHAR(150)",
         'cliente': "VARCHAR(150)",
@@ -295,11 +295,11 @@ with app.app_context():
     colunas_pedido_comercial = {coluna['name'] for coluna in inspect(db.engine).get_columns('pedido_comercial')}
     if 'incluido_no_sap' not in colunas_pedido_comercial:
         with db.engine.begin() as conexao:
-            conexao.exec_driver_sql('ALTER TABLE pedido_comercial ADD COLUMN incluido_no_sap BOOLEAN NOT NULL DEFAULT 0')
+            conexao.exec_driver_sql('ALTER TABLE pedido_comercial ADD COLUMN incluido_no_sap BOOLEAN NOT NULL DEFAULT FALSE')
     for nome_coluna, definicao in {
         'valor_total': 'NUMERIC(12, 2) NOT NULL DEFAULT 0',
-        'observacoes': 'TEXT DEFAULT ""',
-        'resumo': 'TEXT DEFAULT ""'
+        'observacoes': "TEXT DEFAULT ''",
+        'resumo': "TEXT DEFAULT ''"
     }.items():
         if nome_coluna not in colunas_pedido_comercial:
             with db.engine.begin() as conexao:
@@ -307,7 +307,7 @@ with app.app_context():
     colunas_pedido_comercial_item = {coluna['name'] for coluna in inspect(db.engine).get_columns('pedido_comercial_item')}
     for nome_coluna, definicao in {
         'valor': 'NUMERIC(12, 2) NOT NULL DEFAULT 0',
-        'observacao': 'TEXT DEFAULT ""'
+        'observacao': "TEXT DEFAULT ''"
     }.items():
         if nome_coluna not in colunas_pedido_comercial_item:
             with db.engine.begin() as conexao:
