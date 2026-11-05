@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime
 from flask import Flask, render_template
 from flask_login import login_required
-from sqlalchemy import inspect, text
+from sqlalchemy import func, inspect, select, text
 from app.extensions import db, login_manager
 from app.api.compras_api import api_bp
 from app.auth import auth_bp
@@ -130,9 +130,74 @@ def importar_formacao_precos():
         db.session.rollback()
         logging.getLogger(__name__).warning('Falha ao importar formação de preços: %s', erro)
 
+
+def _postgres_missing_column_statement(table, column, dialect):
+    preparer = dialect.identifier_preparer
+    table_name = preparer.quote(table.name)
+    if table.schema:
+        table_name = f'{preparer.quote_schema(table.schema)}.{table_name}'
+    column_name = preparer.quote(column.name)
+    column_type = column.type.compile(dialect=dialect)
+    statement = f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}'
+    if column.server_default is not None:
+        default = column.server_default.arg.compile(dialect=dialect, compile_kwargs={'literal_binds': True})
+        statement += f' DEFAULT {default}'
+    if not column.nullable:
+        statement += ' NOT NULL'
+    return statement
+
+
+def _upgrade_missing_postgres_columns():
+    if db.engine.dialect.name != 'postgresql':
+        return
+
+    inspector = inspect(db.engine)
+    pending = []
+    for table in db.metadata.sorted_tables:
+        if not inspector.has_table(table.name, schema=table.schema):
+            continue
+        existing_columns = {
+            column['name']
+            for column in inspector.get_columns(table.name, schema=table.schema)
+        }
+        missing_columns = [column for column in table.columns if column.name not in existing_columns]
+        if not missing_columns:
+            continue
+
+        row_count = db.session.execute(select(func.count()).select_from(table)).scalar_one()
+        missing_primary_keys = [column.name for column in missing_columns if column.primary_key]
+        if missing_primary_keys:
+            raise RuntimeError(
+                f'A tabela PostgreSQL {table.name} não possui as colunas de chave primária '
+                f'{", ".join(missing_primary_keys)}; corrija o esquema antes de iniciar.'
+            )
+        required_without_default = [
+            column.name
+            for column in missing_columns
+            if row_count and not column.nullable and column.server_default is None
+        ]
+        if required_without_default:
+            raise RuntimeError(
+                f'A tabela PostgreSQL {table.name} possui {row_count} registro(s) e não tem '
+                f'as colunas obrigatórias {", ".join(required_without_default)}. '
+                'Nenhum valor foi inventado; faça uma migração de dados explícita.'
+            )
+        pending.extend((table, column) for column in missing_columns)
+
+    if not pending:
+        return
+
+    with db.engine.begin() as connection:
+        for table, column in pending:
+            connection.exec_driver_sql(
+                _postgres_missing_column_statement(table, column, db.engine.dialect)
+            )
+
+
 # Criação automática do usuário administrador na inicialização
 with app.app_context():
     db.create_all()
+    _upgrade_missing_postgres_columns()
     niveis_padrao = {
         'solicitante': ['dashboard', 'solicitacoes'],
         'estoque': ['dashboard', 'solicitacoes', 'pedidos'],

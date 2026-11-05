@@ -1,14 +1,27 @@
 from datetime import datetime
 
 import pytest
-from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, String, Table, create_engine, select
+from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, String, Table, create_engine, select, text
+from sqlalchemy.dialects import postgresql
 
+from app import _postgres_missing_column_statement
 from scripts.migrate_sqlite_to_postgres import (
     copy_source_table,
     get_postgres_url,
     normalize_value,
     validate_bootstrap_only,
 )
+
+
+def test_postgres_missing_column_ddl_uses_postgresql_boolean_default():
+    column = Column('email_confirmado', Boolean, nullable=False, server_default=text('true'))
+    table = Table('usuario', MetaData(), Column('id', Integer, primary_key=True), column)
+
+    statement = _postgres_missing_column_statement(table, column, postgresql.dialect())
+
+    assert statement == (
+        'ALTER TABLE usuario ADD COLUMN email_confirmado BOOLEAN DEFAULT true NOT NULL'
+    )
 
 
 def test_normalize_value_converts_sqlite_boolean_and_datetime():

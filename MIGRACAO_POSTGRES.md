@@ -46,6 +46,9 @@ Remove-Item Env:DATABASE_URL
 
 O script não apaga nem altera `compras.db`. Ele faz a cópia em uma transação e
 interrompe a operação se detectar tabelas ou colunas que não consegue migrar.
+Na inicialização, o app também completa colunas ausentes em tabelas PostgreSQL
+vazias. Se uma coluna obrigatória estiver ausente numa tabela que já contém dados,
+o app para com uma mensagem explícita em vez de inventar valores.
 
 ## Anexos já existentes
 
