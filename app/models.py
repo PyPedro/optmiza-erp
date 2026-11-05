@@ -44,6 +44,7 @@ class Usuario(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
     perfil = db.Column(db.String(50), default='solicitante')
+    permissoes_json = db.Column(db.Text, nullable=True)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     email_confirmado = db.Column(db.Boolean, default=False, nullable=False)
     email_confirmacao_token_hash = db.Column(db.String(64), nullable=True)

@@ -18,9 +18,18 @@ from app.models import Usuario, NivelAcesso, FormacaoPreco, SolicitacaoCompra, C
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'compras.db')
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
+    elif database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'compras.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True} if database_url else {}
 
 db.init_app(app)
 login_manager.init_app(app)
@@ -136,21 +145,23 @@ with app.app_context():
         if not NivelAcesso.query.filter_by(nome=nome).first():
             db.session.add(NivelAcesso(nome=nome, permissoes=json.dumps(permissoes)))
     db.session.commit()
-    colunas_solicitacao = db.session.execute(text('PRAGMA table_info(solicitacao_compra)')).fetchall()
-    if not any(coluna[1] == 'itens_detalhados' for coluna in colunas_solicitacao):
+    colunas_solicitacao = {coluna['name'] for coluna in inspect(db.engine).get_columns('solicitacao_compra')}
+    if 'itens_detalhados' not in colunas_solicitacao:
         db.session.execute(text("ALTER TABLE solicitacao_compra ADD COLUMN itens_detalhados TEXT DEFAULT ''"))
         db.session.commit()
-    colunas_formacao_preco = db.session.execute(text('PRAGMA table_info(formacao_preco)')).fetchall()
-    if not any(coluna[1] == 'observacao' for coluna in colunas_formacao_preco):
+    colunas_formacao_preco = {coluna['name'] for coluna in inspect(db.engine).get_columns('formacao_preco')}
+    if 'observacao' not in colunas_formacao_preco:
         db.session.execute(text("ALTER TABLE formacao_preco ADD COLUMN observacao TEXT DEFAULT ''"))
         db.session.commit()
-    colunas_cotacao = db.session.execute(text('PRAGMA table_info(cotacao)')).fetchall()
-    if not any(coluna[1] == 'itens_cotacao' for coluna in colunas_cotacao):
+    colunas_cotacao = {coluna['name']: coluna['type'] for coluna in inspect(db.engine).get_columns('cotacao')}
+    if 'itens_cotacao' not in colunas_cotacao:
         db.session.execute(text("ALTER TABLE cotacao ADD COLUMN itens_cotacao TEXT DEFAULT ''"))
-    if not any(coluna[1] == 'valor_total' for coluna in colunas_cotacao):
+    if 'valor_total' not in colunas_cotacao:
         db.session.execute(text("ALTER TABLE cotacao ADD COLUMN valor_total NUMERIC(12, 2) DEFAULT 0"))
-    tipo_valor_unitario = next((coluna[2] for coluna in colunas_cotacao if coluna[1] == 'valor_unitario'), '')
-    if tipo_valor_unitario.replace(' ', '').upper() != 'NUMERIC(12,4)':
+    tipo_valor_unitario = str(colunas_cotacao.get('valor_unitario', '')).replace(' ', '').upper()
+    if tipo_valor_unitario != 'NUMERIC(12,4)':
+        if db.engine.dialect.name != 'sqlite':
+            raise RuntimeError('A coluna cotacao.valor_unitario precisa ser NUMERIC(12, 4).')
         db.session.execute(text('ALTER TABLE cotacao RENAME TO cotacao_precisao_antiga'))
         db.session.execute(text('''
             CREATE TABLE cotacao (
@@ -177,15 +188,21 @@ with app.app_context():
         '''))
         db.session.execute(text('DROP TABLE cotacao_precisao_antiga'))
     db.session.commit()
-    indices_compra_pedido = db.session.execute(text('PRAGMA index_list(compra_pedido_mrp)')).fetchall()
-    indice_unico_por_pedido = False
-    for indice in indices_compra_pedido:
-        if not indice[2]:
-            continue
-        colunas_indice = db.session.execute(text(f'PRAGMA index_info("{indice[1]}")')).fetchall()
-        if [coluna[2] for coluna in colunas_indice] == ['pedido_id']:
-            indice_unico_por_pedido = True
-            break
+    if db.engine.dialect.name == 'sqlite':
+        indices_compra_pedido = db.session.execute(text('PRAGMA index_list(compra_pedido_mrp)')).fetchall()
+        indice_unico_por_pedido = False
+        for indice in indices_compra_pedido:
+            if not indice[2]:
+                continue
+            colunas_indice = db.session.execute(text(f'PRAGMA index_info("{indice[1]}")')).fetchall()
+            if [coluna[2] for coluna in colunas_indice] == ['pedido_id']:
+                indice_unico_por_pedido = True
+                break
+    else:
+        indice_unico_por_pedido = any(
+            indice.get('unique') and indice.get('column_names') == ['pedido_id']
+            for indice in inspect(db.engine).get_indexes('compra_pedido_mrp')
+        )
     if indice_unico_por_pedido:
         with db.engine.begin() as conexao:
             conexao.exec_driver_sql('ALTER TABLE compra_pedido_mrp RENAME TO compra_pedido_mrp_antiga')
@@ -215,9 +232,11 @@ with app.app_context():
     if 'frete_kg' not in colunas_preco:
         with db.engine.begin() as conexao:
             conexao.exec_driver_sql('ALTER TABLE formacao_preco ADD COLUMN frete_kg FLOAT')
-    importar_formacao_precos()
+    if os.environ.get('SKIP_FORMACAO_PRECOS_IMPORT') != '1':
+        importar_formacao_precos()
     colunas_usuario = {coluna['name'] for coluna in inspect(db.engine).get_columns('usuario')}
     novas_colunas_usuario = {
+        'permissoes_json': 'TEXT',
         'email_confirmado': 'BOOLEAN NOT NULL DEFAULT 1',
         'email_confirmacao_token_hash': 'VARCHAR(64)',
         'email_confirmacao_expira_em': 'DATETIME'
@@ -304,11 +323,18 @@ with app.app_context():
             conexao.exec_driver_sql('ALTER TABLE pedido_comercial DROP COLUMN imagem_filename')
     admin = Usuario.query.filter(db.func.lower(Usuario.email) == USUARIO_ADMIN_PROTEGIDO).first()
     if not admin:
-        admin = Usuario(nome="Pedro Marinho", email=USUARIO_ADMIN_PROTEGIDO, perfil="admin", email_confirmado=True)
-        admin.set_senha("123456")
-        db.session.add(admin)
-        db.session.commit()
-        print("✅ [AUTOMÁTICO] Usuário padrão criado: pedro@pcp.com / senha: 123456")
+        senha_inicial = os.environ.get('INITIAL_ADMIN_PASSWORD')
+        if not senha_inicial and db.engine.dialect.name == 'sqlite':
+            senha_inicial = '123456'
+        if senha_inicial:
+            admin = Usuario(nome="Pedro Marinho", email=USUARIO_ADMIN_PROTEGIDO, perfil="admin", email_confirmado=True)
+            admin.set_senha(senha_inicial)
+            db.session.add(admin)
+            db.session.commit()
+        else:
+            logging.getLogger(__name__).warning(
+                'Administrador inicial não criado; configure INITIAL_ADMIN_PASSWORD ou migre um usuário.'
+            )
     else:
         admin.perfil = 'admin'
         admin.email_confirmado = True

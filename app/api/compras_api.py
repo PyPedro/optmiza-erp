@@ -27,7 +27,7 @@ api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 RECIFE_TZ = ZoneInfo('America/Recife')
 
 project_root = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-UPLOAD_FOLDER = os.path.join(project_root, 'uploads')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(project_root, 'uploads'))
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 COMERCIAL_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, 'comercial')
 os.makedirs(COMERCIAL_UPLOAD_FOLDER, exist_ok=True)
