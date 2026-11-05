@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Entrar | Optmiza ERP</title>
+    
+    <!-- Ícone da aba do navegador (Favicon) mantido do seu arquivo base -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/2611181 (1).png') }}">
+    
+    <!-- Fontes do novo design -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500&display=swap">
+    
+    <!-- ATENÇÃO: Não adicione a tag de link para o style.css global aqui para evitar conflito.
+         Abaixo estão os estilos exclusivos da tela de login. -->
+    <style>
+        :root{--noite:#0F172A;--azul:#0EA5E9;--profundo:#0369A1;--claro:#38BDF8;--aco:#475569;--nevoa:#F1F5F9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+        *,*::before,*::after{box-sizing:inherit}
+        body{margin:0;background:var(--nevoa);color:var(--noite);font:400 16px/1.5 "IBM Plex Sans","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+        .page{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;overflow:hidden}
+        .bgring{position:absolute;right:-140px;bottom:-170px;width:clamp(360px,36vw,620px);height:auto;opacity:.10;pointer-events:none}
+        .card{position:relative;z-index:1;width:100%;max-width:920px;display:grid;grid-template-columns:1fr 1fr;border-radius:24px;overflow:hidden;background:#fff;box-shadow:0 28px 60px -24px rgba(15,23,42,.28),0 0 0 1px #E2E8F0}
+        .brand{position:relative;overflow:hidden;background:var(--noite);color:#F8FAFC;padding:44px;min-height:540px;display:flex;flex-direction:column;justify-content:space-between;gap:48px}
+        .brand .ring{position:absolute;right:-120px;bottom:-140px;width:400px;height:auto;opacity:.13;pointer-events:none}
+        .brand>*{position:relative}.brand .ring{position:absolute}
+        .logo{display:flex;align-items:flex-end;gap:10px}.logo svg{width:140px;height:auto;display:block}
+        .badge{margin-bottom:6px;padding:1px 7px;border:1px solid #475569;border-radius:5px;font-size:12px;font-weight:500;color:#CBD5E1}
+        .eyebrow{margin:0;color:var(--claro);font-size:14px;font-weight:500}
+        h1{margin:12px 0 0;font:500 clamp(28px,3.4vw,38px)/1.1 "Space Grotesk","Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em}
+        .lead{margin:18px 0 0;color:#CBD5E1;font-size:16px;line-height:1.6;max-width:36ch}
+        .ver{margin:0;color:#64748B;font-size:13px}
+        .form{padding:44px;display:flex;flex-direction:column;justify-content:center}
+        h2{margin:0;font:500 28px/1.15 "Space Grotesk","Helvetica Neue",Arial,sans-serif;letter-spacing:-.015em}
+        .sub{margin:6px 0 28px;color:var(--aco)}
+        label{display:block;margin-top:18px;font-size:14px;font-weight:500}
+        .field{position:relative}
+        input{display:block;width:100%;height:48px;margin-top:6px;padding:0 14px;border:1px solid #CBD5E1;border-radius:10px;background:#fff;color:var(--noite);font:inherit}
+        input::placeholder{color:#94A3B8}input:focus{outline:2px solid var(--azul);outline-offset:1px;border-color:var(--azul)}
+        .show{position:absolute;right:12px;top:calc(50% + 3px);transform:translateY(-50%);border:0;background:none;color:var(--aco);font:500 14px inherit;cursor:pointer}
+        button.go{width:100%;height:50px;margin-top:28px;border:0;border-radius:10px;background:var(--profundo);color:#fff;font:500 16px "IBM Plex Sans",Arial,sans-serif;cursor:pointer;transition:background .15s}
+        button.go:hover{background:var(--noite)}button:focus-visible{outline:2px solid var(--azul);outline-offset:3px}
+        .foot{position:relative;z-index:1;margin:28px 0 0;color:var(--aco);font-size:12.5px;text-align:center}.foot b{font-weight:500}.foot .o{color:var(--profundo)}
+        @media (max-width:820px){.card{grid-template-columns:1fr;max-width:460px}.brand{min-height:0;padding:32px;gap:28px}.form{padding:32px}}
+        
+        /* Estilo para as mensagens de erro do Flask na nova tela */
+        .flash-errors {
+            background: #FEE2E2;
+            border: 1px solid #F87171;
+            color: #7F1D1D;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <svg class="bgring" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="22.5" fill="none" stroke="#0EA5E9" stroke-width="7.4" stroke-linecap="round" stroke-dasharray="113.1 28.27"/></svg>
+    <div class="card">
+        <section class="brand">
+            <svg class="ring" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="22.5" fill="none" stroke="#0EA5E9" stroke-width="7.4" stroke-linecap="round" stroke-dasharray="113.1 28.27"/></svg>
+            <div class="logo">
+                <svg viewBox="-4 10.6 302.44 81.8" role="img" aria-label="Optmiza"><circle cx="30.2" cy="44.8" r="22.5" fill="none" stroke="#38BDF8" stroke-width="7.4" stroke-linecap="round" stroke-dasharray="113.1 28.27"/><path d="M65.87 84.4V34.5H73.14V39.62H74.3Q75.66 37.24 78.44 35.37Q81.21 33.5 86.39 33.5Q90.86 33.5 94.56 35.66Q98.27 37.82 100.54 41.88Q102.81 45.95 102.81 51.71V52.79Q102.81 58.55 100.58 62.62Q98.34 66.69 94.6 68.85Q90.86 71.01 86.39 71.01Q82.94 71.01 80.56 70.14Q78.18 69.28 76.74 67.95Q75.3 66.62 74.44 65.18H73.29V84.4ZM84.23 64.53Q89.13 64.53 92.22 61.43Q95.32 58.34 95.32 52.58V51.93Q95.32 46.24 92.19 43.14Q89.06 40.05 84.23 40.05Q79.48 40.05 76.35 43.14Q73.22 46.24 73.22 51.93V52.58Q73.22 58.34 76.35 61.43Q79.48 64.53 84.23 64.53ZM123.04 70Q119.8 70 117.89 68.06Q115.98 66.11 115.98 62.87V40.77H106.19V34.5H115.98V22.77H123.4V34.5H133.98V40.77H123.4V61.58Q123.4 63.74 125.42 63.74H132.83V70ZM141.69 70V34.5H148.96V38.68H150.11Q151.12 36.81 153.35 35.37Q155.58 33.93 159.4 33.93Q163.36 33.93 165.77 35.55Q168.18 37.17 169.41 39.69H170.56Q171.78 37.24 174.12 35.58Q176.46 33.93 180.78 33.93Q184.24 33.93 186.9 35.33Q189.57 36.74 191.15 39.51Q192.74 42.28 192.74 46.38V70H185.32V46.96Q185.32 43.72 183.56 41.96Q181.79 40.19 178.55 40.19Q175.1 40.19 173.01 42.42Q170.92 44.66 170.92 48.83V70H163.5V46.96Q163.5 43.72 161.74 41.96Q159.98 40.19 156.74 40.19Q153.28 40.19 151.19 42.42Q149.1 44.66 149.1 48.83V70ZM202.38 70V34.5H209.8V70ZM206.13 29.68Q203.97 29.68 202.49 28.28Q201.02 26.87 201.02 24.64Q201.02 22.41 202.49 21Q203.97 19.6 206.13 19.6Q208.36 19.6 209.8 21Q211.24 22.41 211.24 24.64Q211.24 26.87 209.8 28.28Q208.36 29.68 206.13 29.68ZM218.37 70V60.93L239.32 41.78V40.77H219.09V34.5H247.38V43.65L226.36 62.8V63.74H247.96V70ZM267.11 71.01Q263.3 71.01 260.31 69.71Q257.32 68.42 255.56 65.9Q253.79 63.38 253.79 59.78Q253.79 56.1 255.56 53.69Q257.32 51.28 260.38 50.06Q263.44 48.83 267.33 48.83H278.13V46.53Q278.13 43.43 276.26 41.56Q274.38 39.69 270.5 39.69Q266.68 39.69 264.66 41.49Q262.65 43.29 262 46.17L255.09 43.94Q255.95 41.06 257.86 38.72Q259.77 36.38 262.94 34.94Q266.1 33.5 270.57 33.5Q277.48 33.5 281.44 37.02Q285.4 40.55 285.4 47.03V61.65Q285.4 63.81 287.42 63.81H290.44V70H284.9Q282.38 70 280.79 68.7Q279.21 67.41 279.21 65.18V64.96H278.13Q277.55 66.04 276.4 67.48Q275.25 68.92 273.02 69.96Q270.78 71.01 267.11 71.01ZM268.19 64.89Q272.66 64.89 275.39 62.33Q278.13 59.78 278.13 55.31V54.59H267.76Q264.81 54.59 263.01 55.85Q261.21 57.11 261.21 59.56Q261.21 62.01 263.08 63.45Q264.95 64.89 268.19 64.89Z" fill="#F8FAFC"/></svg>
+                <span class="badge">ERP</span>
+            </div>
+            <div>
+                <p class="eyebrow">Sua operação, em fluxo.</p>
+                <h1>O motor da sua cadeia de suprimentos.</h1>
+                <p class="lead">Conecte o planejamento da produção à execução de compras e ao rastreio logístico em uma plataforma única.</p>
+            </div>
+            <p class="ver">Optmiza ERP, versão 1.0</p>
+        </section>
+        
+        <section class="form">
+            <h2>Entrar</h2>
+            <p class="sub">Acesse a sua operação.</p>
+            
+            <!-- Mensagens de erro do Flask -->
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="flash-errors">
+                  {% for message in messages %}
+                    {{ message }}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+            
+            <!-- Formulário preparado para enviar via POST (igual ao seu original) -->
+            <form method="POST">
+                <label>E-mail
+                    <input type="email" name="email" placeholder="Digite seu e-mail" autocomplete="username" required>
+                </label>
+                
+                <label for="senha">Senha</label>
+                <div class="field">
+                    <input id="senha" type="password" name="senha" placeholder="Digite sua senha" autocomplete="current-password" required style="padding-right:84px">
+                    <button type="button" class="show" id="ver" aria-controls="senha">Mostrar</button>
+                </div>
+                
+                <button type="submit" class="go">Entrar</button>
+            </form>
+        </section>
+    </div>
+    <p class="foot">Desenvolvido por <b>Pedro Marinho</b>. Um produto <b class="o">Optmiza</b>.</p>
+</main>
+<script>
+    document.getElementById('ver').onclick=function(){
+        var i=document.getElementById('senha'), s=i.type==='password';
+        i.type=s?'text':'password';
+        this.textContent=s?'Ocultar':'Mostrar';
+    }
+</script>
+</body>
+</html>

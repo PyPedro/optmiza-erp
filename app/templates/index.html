@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div id="view-dashboard" class="view-section active">
+    <header class="dashboard-header">
+        <div>
+            <span class="dashboard-eyebrow">Centro de controle</span>
+            <h1>Visão Geral da Operação</h1>
+            <p>Acompanhe prioridades, compras e entregas em um só lugar.</p>
+        </div>
+        <button class="btn" onclick="openModal()">+ Nova Solicitação</button>
+    </header>
+
+    <div class="dashboard-tools">
+    <section class="card dashboard-tool" style="margin-bottom: 15px; padding: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <div>
+                <h2 style="font-size: 1rem; margin: 0; color: var(--text-title);">Consulta da operação</h2>
+                <small style="color: var(--text-body);">Pergunte sobre fornecedores, compras ou pedidos.</small>
+            </div>
+            <small style="color: var(--text-body);">Ex.: Qual fornecedor do item malha?</small>
+        </div>
+        <form id="form-dashboard-consulta" onsubmit="consultarDashboard(event)" style="display: flex; gap: 8px;">
+            <input type="search" id="dashboard-pergunta" placeholder="Digite sua pergunta..." autocomplete="off" required style="flex: 1; min-width: 0;">
+            <button type="submit" class="btn">Consultar</button>
+        </form>
+        <div id="dashboard-resposta" style="display: none; margin-top: 10px;"></div>
+    </section>
+
+    <section class="card dashboard-tool dashboard-precos-search" style="margin-bottom: 15px; padding: 12px;">
+        <div style="margin-bottom: 8px;"><h2 style="font-size: 1rem; margin: 0; color: var(--text-title);">Consultar formação de preços</h2><small style="color: var(--text-body);">Pesquise um material para abrir seu histórico de custos.</small></div>
+        <form onsubmit="abrirPrecoPesquisado(event)" class="dashboard-precos-form">
+            <div class="precos-search-wrap"><input type="search" id="dashboard-preco-search" placeholder="Digite o nome do material..." autocomplete="off" required><div id="dashboard-preco-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <button type="submit" class="btn">Ver formação</button>
+        </form>
+        <div id="dashboard-preco-result" class="dashboard-preco-result"></div>
+    </section>
+    </div>
+
+    <section id="agenda-card" class="agenda-card" aria-labelledby="agenda-titulo" aria-hidden="true">
+        <div class="agenda-head">
+            <div>
+                <span class="agenda-eyebrow">Minha agenda</span>
+                <h2 id="agenda-titulo">Demandas do dia</h2>
+                <p id="agenda-resumo">Organize o que precisa ser feito hoje.</p>
+            </div>
+            <div class="agenda-date-control">
+                <button class="agenda-date-button" type="button" onclick="mudarDataAgenda(-1)" aria-label="Dia anterior">&#8249;</button>
+                <input type="date" id="agenda-data" aria-label="Data da agenda" onchange="carregarAgenda()">
+                <button class="agenda-date-button" type="button" onclick="mudarDataAgenda(1)" aria-label="Próximo dia">&#8250;</button>
+            </div>
+        </div>
+        <form class="agenda-add" onsubmit="adicionarTarefaAgenda(event)">
+            <input type="text" id="agenda-nova-tarefa" placeholder="Adicionar uma demanda..." maxlength="255" autocomplete="off" required>
+            <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <div id="agenda-lista" class="agenda-lista" aria-live="polite"></div>
+    </section>
+
+    <!-- Adicionado id="dash-kpis" -->
+    <div id="dash-kpis" class="cards-grid" style="margin-bottom: 15px; gap: 12px;">
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">SC em Aberto</h3><div class="value" id="kpi-sc" style="font-size: 1.4rem;">--</div></div>
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">Pedidos Ativos (PO)</h3><div class="value" id="kpi-po" style="font-size: 1.4rem;">--</div></div>
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">Volume Total Comprado</h3><div class="value" id="kpi-total" style="color: var(--primary-color); font-size: 1.4rem;">R$ 0,00</div></div>
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">Lead Time Externo Médio</h3><div class="value" id="kpi-lead" style="font-size: 1.4rem;">--</div></div>
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">Lead Time Interno Médio</h3><div class="value" id="kpi-lead-interno" style="font-size: 1.4rem;">--</div></div>
+        <div class="card" style="padding: 12px 16px;"><h3 style="font-size: 0.7rem; margin-bottom: 4px;">Emergenciais</h3><div class="value" id="kpi-emerg" style="font-size: 1.4rem;">--</div></div>
+    </div>
+
+    <div class="dashboard-analytics-grid">
+        
+        <!-- Adicionado id="dash-chart-status" -->
+        <div id="dash-chart-status" class="dashboard-panel"><canvas id="chartStatus"></canvas></div>
+        
+        <!-- Adicionado id="dash-chart-gastos" -->
+        <div id="dash-chart-gastos" class="dashboard-panel"><canvas id="chartGastosFornecedor"></canvas></div>
+        
+        <!-- Bloco do Calendário (O estoque verá este!) -->
+        <div id="dash-previsao" class="dashboard-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+                <h3 style="font-size: 0.8rem; color: var(--text-body); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Previsão de Chegada</h3>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <button class="btn-pill-previsao active" onclick="setFiltroPrevisao('hoje', this)">Hoje</button>
+                    <button class="btn-pill-previsao" onclick="setFiltroPrevisao('semana', this)">Semana</button>
+                    <button class="btn-pill-previsao" onclick="setFiltroPrevisao('mes', this)">Mês</button>
+                    <button class="btn-pill-previsao" style="padding: 2px 8px; font-size: 1.1rem; border: none; background: transparent; cursor: pointer;" onclick="abrirCalendarioGeral()" title="Ver Calendário Completo">📅</button>
+                </div>
+            </div>
+            <div id="dashboard-previsao-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1;"></div>
+        </div>
+        
+        <!-- Adicionado id="dash-rotas" -->
+        <div id="dash-rotas" class="dashboard-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h3 style="font-size: 0.8rem; color: var(--text-body); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Rotas Ativas (Motorista)</h3><a onclick="switchView('rotas', document.getElementById('nav-rotas'))" style="font-size: 0.75rem; color: var(--info-color); font-weight: 600; cursor: pointer;">Ver todas &rarr;</a></div>
+            <div id="dashboard-rotas-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1;"></div>
+        </div>
+    </div>
+
+    <!-- Adicionados id="dash-kanban-title" e id="dash-kanban-board" -->
+    <div id="dash-kanban-board" class="kanban-board" style="min-height: 380px; margin-bottom: 0;">
+        <div class="kanban-col" id="kb-solicitacao" style="min-height: 350px;"><div class="kb-header"><span>Solicitação (<span id="count-sc">0</span>)</span><input class="kb-search" type="search" placeholder="Cliente, pedido, material, item ou código..." aria-label="Pesquisar na coluna Solicitação" oninput="filtrarKanban('solicitacao', this.value)"></div><div class="kb-cards"></div></div>
+        <div class="kanban-col" id="kb-cotacao" style="min-height: 350px;"><div class="kb-header"><span>Em Cotação (<span id="count-cot">0</span>)</span><input class="kb-search" type="search" placeholder="Cliente, pedido, material, item ou código..." aria-label="Pesquisar na coluna Em Cotação" oninput="filtrarKanban('cotacao', this.value)"></div><div class="kb-cards"></div></div>
+        <div class="kanban-col" id="kb-pedido" style="min-height: 350px;"><div class="kb-header"><span>Pedido Gerado (<span id="count-ped">0</span>)</span><input class="kb-search" type="search" placeholder="Cliente, pedido, material, item ou código..." aria-label="Pesquisar na coluna Pedido Gerado" oninput="filtrarKanban('pedido', this.value)"></div><div class="kb-cards"></div></div>
+        <div class="kanban-col" id="kb-transito" style="min-height: 350px;"><div class="kb-header"><span>Em Transito (<span id="count-trans">0</span>)</span><input class="kb-search" type="search" placeholder="Cliente, pedido, material, item ou código..." aria-label="Pesquisar na coluna Em Transito" oninput="filtrarKanban('transito', this.value)"></div><div class="kb-cards"></div></div>
+        <div class="kanban-col" id="kb-entregue" style="min-height: 350px;"><div class="kb-header"><span>Concluído (<span id="count-ent">0</span>)</span><input class="kb-search" type="search" placeholder="Cliente, pedido, material, item ou código..." aria-label="Pesquisar na coluna Concluído" oninput="filtrarKanban('entregue', this.value)"></div><div class="kb-cards"></div></div>
+    </div>
+</div>
+
+<div id="view-itens" class="view-section">
+    <header>
+        <div>
+            <span class="dashboard-eyebrow">Cadastros</span>
+            <h1>Cadastro de Itens</h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-outline" type="button" onclick="abrirImportacaoItens()">Importar Excel</button>
+            <button class="btn" type="button" onclick="openModalItem()">+ Novo Item</button>
+        </div>
+    </header>
+    <div class="filter-bar">
+        <input type="search" id="search-itens" placeholder="Pesquisar por código, descrição ou grupo..." oninput="filtrarItens()" autocomplete="off">
+    </div>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>Código</th><th>Descrição</th><th>Estoque</th><th>Grupo</th><th>Fabricante</th><th>Unidade</th><th>Último preço</th><th>Ações</th></tr></thead>
+            <tbody id="itens-table-body"><tr><td colspan="8" style="text-align:center;">Carregando itens...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="view-solicitacoes" class="view-section">
+    <header><h1>Solicitações de Compra (SC)</h1><button class="btn" onclick="openModal()">+ Nova Solicitação</button></header>
+    <div class="filter-bar">
+        <input type="text" id="search-sc" placeholder="Pesquisar por item ou ID..." oninput="filtrarSolicitacoes()" style="flex: 2; min-width: 220px;">
+        <input type="date" id="filtro-data-sc" onchange="filtrarSolicitacoes()" style="flex: 1; min-width: 150px;" title="Filtrar por Data">
+    </div>
+    <div class="table-container"><table><thead><tr><th>ID</th><th>Item / Material</th><th>Quantidade</th><th>Pedido SAP</th><th>Solicitante</th><th>Status</th><th>Ação</th></tr></thead><tbody id="sc-table-body"></tbody></table></div>
+</div>
+
+<div id="view-comercial" class="view-section">
+    <header>
+        <div class="header-left">
+            <button class="btn btn-outline" onclick="switchView('dashboard', document.getElementById('nav-dashboard'))">&larr; Voltar</button>
+            <div><h1>Pedidos do Comercial</h1><p>Registre pedidos por produto e acompanhe as referências do SAP.</p></div>
+        </div>
+        <button class="btn" onclick="abrirModalPedidoComercial()">+ Novo pedido</button>
+    </header>
+    <div class="filter-bar"><input type="search" id="search-comercial" placeholder="Pesquisar cliente, SAP ou produto..." oninput="filtrarPedidosComerciais()"></div>
+    <div class="table-container"><table><thead><tr><th>Cliente</th><th>Data do pedido</th><th>Pedido SAP</th><th>Produtos</th><th>Quantidade</th><th>SAP</th><th>Foto</th><th>Ações</th></tr></thead><tbody id="comercial-table-body"><tr><td colspan="8" style="text-align:center;">Carregando pedidos...</td></tr></tbody></table></div>
+</div>
+
+<div id="view-cotacoes" class="view-section">
+    <header><div class="header-left"><button class="btn-outline" onclick="switchView('solicitacoes', document.getElementById('nav-solicitacoes'))">&larr; Voltar</button><h1>Cotações: <span id="cotacao-sc-id"></span></h1></div><button class="btn" onclick="openModalCotacao()">+ Nova Cotação</button></header>
+    <div class="table-container"><table><thead><tr><th>Fornecedor</th><th>Itens e valores individuais</th><th>Total da cotação</th><th>Prazo Entrega</th><th>Condição Pgto</th><th>Ação</th></tr></thead><tbody id="cotacoes-table-body"></tbody></table></div>
+</div>
+
+<div id="view-pedidos" class="view-section">
+    <header>
+        <h1>Pedidos de Compra (PO)</h1>
+        <div style="display: flex; gap: 10px;"><button class="btn btn-outline" onclick="exportarRelatorioPedidos()">📥 Exportar Relatório</button><button class="btn" onclick="openModalNovoPO()">+ Novo Pedido Direto</button></div>
+    </header>
+    <div class="filter-bar">
+        <input type="text" id="search-po" placeholder="Pesquisar por PO, SC Ref ou Fornecedor..." oninput="filtrarPedidos()" style="flex: 2; min-width: 250px;">
+        <input type="date" id="filtro-data-po" onchange="filtrarPedidos()" style="flex: 1; min-width: 150px;" title="Filtrar por Data de Emissão">
+    </div>
+    <div class="table-container"><table><thead><tr><th>PO ID</th><th>SC Ref.</th><th>Item</th><th>Fornecedor</th><th>Valor Total</th><th>Status</th><th>Ações</th></tr></thead><tbody id="po-table-body"></tbody></table></div>
+</div>
+
+<div id="view-fornecedores" class="view-section">
+    <header><h1>Fornecedores Homologados</h1><button class="btn" onclick="openModalFornecedor()">+ Novo Fornecedor</button></header>
+    <div class="filter-bar">
+        <div class="item-search fornecedor-table-search">
+            <input type="search" id="search-fornecedor" placeholder="Pesquisar por razão social, código ou CNPJ..." oninput="pesquisarFornecedorTabela(this.value)" onkeydown="navegarSugestoesFornecedorTabela(event)" autocomplete="off" aria-controls="fornecedor-table-suggestions">
+            <div id="fornecedor-table-suggestions" class="item-suggestions" role="listbox"></div>
+        </div>
+    </div>
+    <div class="table-container"><table><thead><tr><th>CNPJ</th><th>Razão Social</th><th>Categoria Principal</th><th>Avaliação</th></tr></thead><tbody id="fornecedores-table-body"></tbody></table></div>
+    <div id="fornecedores-paginacao" class="fornecedores-paginacao" aria-label="Paginação de fornecedores"></div>
+</div>
+
+<div id="view-mrp" class="view-section">
+    <header style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div><h1>Cálculo de Necessidades (MRP)</h1><p style="color: var(--text-body); font-size: 0.9rem; margin-top: 5px;">Acompanhamento de estoque e sugestões automáticas de compras.</p></div>
+        <div style="display: flex; gap: 10px;"><button class="btn btn-outline" onclick="abrirImportacaoMRP()">Importar Excel</button><button class="btn btn-outline" onclick="openModalNovoPedidoMRP()">+ Novo pedido</button><button class="btn" onclick="openModalNovoMRP()">+ Novo Produto</button></div>
+    </header>
+    <div class="mrp-search-panel"><label for="search-mrp">Pesquisar material</label><div class="mrp-search-input"><span aria-hidden="true">⌕</span><input type="search" id="search-mrp" placeholder="Digite o nome do material para consultar..." oninput="filtrarMRP()" autocomplete="off"></div><small>Digite pelo menos 2 caracteres para visualizar o planejamento e o histórico.</small></div>
+    <div id="mrp-calculadora" class="mrp-calculadora" hidden></div>
+    <div id="mrp-results" class="mrp-results" hidden><div id="mrp-table-body" class="mrp-product-results"></div></div>
+    <div id="mrp-planilha-result" class="mrp-planilha-result" hidden></div>
+</div>
+
+<div id="view-rotas" class="view-section">
+    <header><h1>Rotas e Coletas do Motorista</h1><div class="rotas-acoes-header"><button class="btn btn-outline" type="button" onclick="enviarRotasWhatsApp()" title="Enviar as rotas marcadas pelo WhatsApp">Enviar selecionadas</button><button class="btn btn-outline" type="button" onclick="imprimirRotasSelecionadas()" title="Imprimir as rotas marcadas">Imprimir selecionadas</button><button class="btn btn-outline" type="button" onclick="abrirRotaCompletaSelecionada()" title="Abrir as rotas marcadas no GPS">Abrir no GPS</button><button class="btn btn-outline" type="button" onclick="enviarRotaDoDiaWhatsApp()">Enviar rota do dia</button><button class="btn" type="button" onclick="openModalNovaRota()">+ Agendar Rota</button></div></header>
+    <div class="table-container"><table><thead><tr><th class="rota-selecao-col"><input type="checkbox" id="selecionar-todas-rotas" onchange="alternarTodasRotas(this.checked)" aria-label="Selecionar todas as rotas"></th><th>Data Prevista</th><th>Motorista Responsável</th><th>Destino / Fornecedor</th><th>Endereço</th><th>GPS</th><th>Ref. (PO)</th><th>Status</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="rotas-table-body"></tbody></table></div>
+</div>
+
+<div id="view-precos" class="view-section">
+    <header class="precos-header"><div><h1>Formação de Preços</h1><p>Histórico de custos por material e fornecedor.</p></div><div class="precos-header-actions"><button class="btn btn-outline" onclick="carregarPrecos()">Atualizar dados</button><button class="btn btn-outline" onclick="importarPrecosExcel()">Importar Excel</button><button class="btn" onclick="abrirModalPreco()">+ Novo registro</button><input type="file" id="precos-excel-input" accept=".xlsx,.xlsm" hidden onchange="enviarImportacaoPrecos(this)"></div></header>
+    <section class="precos-panel">
+        <div class="precos-filter-grid"><div class="precos-filter"><label for="precos-material-search">Pesquisar material</label><div class="precos-search-wrap"><input type="search" id="precos-material-search" placeholder="Digite nome ou fornecedor..." oninput="filtrarMateriaisPreco()" autocomplete="off"><div id="precos-material-suggestions" class="item-suggestions" role="listbox"></div></div></div><div class="precos-filter"><label for="precos-material-select">Material selecionado</label><select id="precos-material-select" onchange="renderRegistrosPrecoSelecionado()"><option value="">Selecione um material...</option></select></div></div>
+        <div id="precos-container" class="precos-single-card">
+        <p style="color: var(--text-body);">Carregando histórico de preços...</p>
+        </div>
+    </section>
+</div>
+
+<div id="view-usuarios" class="view-section">
+    <header style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div><h1>Controle de Usuários e Acessos</h1><p style="color: var(--text-body); font-size: 0.9rem; margin-top: 5px;">Cadastre usuários e defina níveis de acesso por página.</p></div>
+        <div style="display:flex; gap:8px;"><button class="btn btn-outline" onclick="openModalNivel()">Gerenciar níveis</button><button class="btn" onclick="openModalUsuario()">+ Novo Usuário</button></div>
+    </header>
+    <div class="table-container" style="margin-top: 20px;">
+        <table>
+            <thead><tr><th>ID</th><th>Nome</th><th>E-mail</th><th>Perfil / Nível</th><th>Ações</th></tr></thead>
+            <tbody id="usuarios-table-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<template id="template-kanban-card">
+    <div class="kb-card">
+        <div class="kb-card-title"><span class="card-id-text"></span><span class="badge-atrasado-container"></span></div>
+        <div class="card-tags-container" style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:8px;"></div>
+        <div class="kb-card-desc"></div>
+        <div class="kb-card-footer"><span class="card-footer-left"></span><span class="card-footer-right"></span></div>
+    </div>
+</template>
+
+<template id="template-tag-label">
+    <span class="tag-label" style="font-size:0.6rem; padding: 2px 6px;"><span class="tag-text"></span> <span class="remove" style="cursor:pointer; font-weight:bold; color:rgba(255,255,255,0.7); font-size:0.85rem; margin-left:4px;">&times;</span></span>
+</template>
+
+{% include 'components/modais.html' %}
+{% endblock %}

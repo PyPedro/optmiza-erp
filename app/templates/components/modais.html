@@ -1,0 +1,630 @@
+<div id="modalConfirmacao" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmacao-titulo">
+    <div class="modal-content confirmacao-modal-content">
+        <h2 id="confirmacao-titulo">Confirmar ação</h2>
+        <p id="confirmacao-mensagem" class="confirmacao-mensagem"></p>
+        <div class="confirmacao-acoes">
+            <button type="button" class="btn btn-outline" onclick="resolverConfirmacao(false)">Cancelar</button>
+            <button type="button" class="btn" onclick="resolverConfirmacao(true)">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalDetalhesMRP" class="modal" role="dialog" aria-modal="true" aria-labelledby="detalhes-mrp-titulo">
+    <div class="modal-content modal-detalhes-mrp-content">
+        <div class="modal-detalhes-mrp-header">
+            <h2 id="detalhes-mrp-titulo">Detalhes do produto</h2>
+            <button type="button" class="btn btn-outline modal-fechar-icone" onclick="fecharDetalhesMRP()" aria-label="Fechar detalhes" title="Fechar detalhes">&times;</button>
+        </div>
+        <div id="detalhes-mrp-corpo"></div>
+    </div>
+</div>
+
+<!-- Modal Nova Solicitação de Compra -->
+<div id="modalPreco" class="modal">
+    <div class="modal-content" style="max-width: 620px;">
+        <h2 id="tituloModalPreco">Novo Registro de Preço</h2>
+        <form id="formPreco" onsubmit="salvarPreco(event)">
+            <input type="hidden" id="preco_edit_id">
+            <div class="form-group"><label for="preco_material_nome">Material</label><div class="preco-autocomplete"><input id="preco_material_nome" oninput="pesquisarMaterialPreco(this.value); atualizarFiosPreco()" autocomplete="off" required style="width:100%;"><div id="preco-material-suggestions" class="item-suggestions" role="listbox"></div></div></div>
+            <div class="form-group"><label for="preco_fornecedor_servico">Fornecedor / Serviço</label><div class="preco-autocomplete"><input id="preco_fornecedor_servico" oninput="pesquisarFornecedorPreco(this.value)" autocomplete="off" style="width:100%;"><div id="preco-fornecedor-suggestions" class="item-suggestions" role="listbox"></div></div></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div class="form-group"><label>Data de recebimento</label><input id="preco_data_recebimento" style="width:100%;"></div><div class="form-group"><label>NFE</label><input id="preco_nfe" style="width:100%;"></div><div class="form-group"><label>Valor do fio (R$/KG)</label><input type="number" step="any" id="preco_valor_fio" style="width:100%;"></div><div class="form-group"><label>Serviço (R$/KG)</label><input type="number" step="any" id="preco_valor_servico" style="width:100%;"></div><div class="form-group"><label>Frete (R$/KG)</label><input type="number" step="any" id="preco_frete" style="width:100%;"></div><div class="form-group"><label>Peso bruto</label><input type="number" step="any" id="preco_peso_bruto" style="width:100%;"></div><div class="form-group"><label>Peso líquido</label><input type="number" step="any" id="preco_peso_liquido" style="width:100%;"></div></div>
+            <div class="form-group"><label for="preco_observacao">Observação</label><textarea id="preco_observacao" rows="3" maxlength="1000" placeholder="Informe detalhes, ajustes ou condições deste registro..." style="width:100%; resize:vertical;"></textarea></div>
+            <div id="preco-fios-group" style="display:none; margin-top:12px;"><label>Fios da matéria-prima (Piquet)</label><div id="preco-fios-list"></div><button type="button" class="btn btn-outline" onclick="adicionarFioPreco()">+ Adicionar fio</button></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="fecharModalPreco()">Cancelar</button><button type="submit" class="btn">Salvar Registro</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Demanda da Agenda -->
+<div id="modalEditarAgenda" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalEditarAgenda">
+    <div class="modal-content agenda-modal-content">
+        <h2 id="tituloModalEditarAgenda">Editar demanda</h2>
+        <form id="formEditarAgenda" onsubmit="salvarEdicaoTarefaAgenda(event)">
+            <input type="hidden" id="agenda-editar-id">
+            <div class="form-group">
+                <label for="agenda-editar-titulo">Demanda</label>
+                <input type="text" id="agenda-editar-titulo" maxlength="255" required style="width: 100%;">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                <button type="button" class="btn btn-outline" onclick="fecharModalEditarAgenda()">Cancelar</button>
+                <button type="submit" class="btn">Salvar alteração</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nova Solicitação de Compra -->
+<div id="modalSC" class="modal">
+    <div class="modal-content">
+        <h2>Nova Solicitação de Compra</h2>
+        <form id="formSC" onsubmit="submitForm(event)">
+            <div class="form-group">
+                <label>Itens da solicitação</label>
+                <div id="itens-solicitacao-list"></div>
+                <button type="button" class="btn btn-outline" onclick="adicionarLinhaItemSolicitacao()" style="margin-top: 8px;">+ Adicionar item</button>
+            </div>
+            <div class="form-group"><label for="numero_pedido_sap">Número do pedido SAP <span style="font-weight:400; color:var(--text-body);">(opcional)</span></label><input type="text" id="numero_pedido_sap" maxlength="50" placeholder="Ex: 4500012345" style="width: 100%;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+                <button type="submit" class="btn">Salvar Solicitação</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Gerenciamento Cotações -->
+<div id="modalCotacao" class="modal">
+    <div class="modal-content modal-cotacao-content">
+        <h2>Adicionar Nova Cotação</h2>
+        <p class="modal-cotacao-ajuda">Preencha as condições de cada item. Uma solicitação pode ter itens de fornecedores diferentes.</p>
+        <form id="formCotacao" onsubmit="submitFormCotacao(event)">
+            <div class="form-group">
+                <label>Itens e condições da cotação</label>
+                <div id="itens-cotacao-list"></div>
+                <button type="button" class="btn btn-outline" onclick="adicionarLinhaItemCotacao()" style="margin-top:8px;">+ Adicionar item</button>
+                <strong id="cotacao-total-preview" style="display:block; margin-top:10px; color:var(--primary-color);">Total: R$ 0,00</strong>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalCotacao()">Cancelar</button>
+                <button type="submit" class="btn" data-cotacao-acao="finalizar">Salvar Cotação</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Novo Fornecedor -->
+<div id="modalFornecedor" class="modal">
+    <div class="modal-content">
+        <h2 id="tituloModalFornecedor">Homologar Novo Fornecedor</h2>
+        <form id="formFornecedor" onsubmit="submitFormFornecedor(event)">
+            <input type="hidden" id="fornecedor_edit_id">
+            <div class="form-group"><label>CNPJ</label><input type="text" id="cnpj_fornecedor" placeholder="00.000.000/0001-00" required style="width: 100%;"></div>
+            <div class="form-group"><label>Razão Social</label><input type="text" id="razao_social" required style="width: 100%;"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div class="form-group"><label>Nome Fantasia</label><input type="text" id="nome_fantasia_fornecedor" style="width:100%;"></div><div class="form-group"><label>Código</label><input type="text" id="codigo_fornecedor" style="width:100%;"></div><div class="form-group"><label>UF</label><input type="text" id="uf_fornecedor" maxlength="2" style="width:100%;"></div><div class="form-group"><label>Cidade</label><input type="text" id="cidade_fornecedor" style="width:100%;"></div><div class="form-group"><label>Categoria Principal</label><input type="text" id="categoria_fornecedor" placeholder="Ex: Tecidos, Matéria-prima..." style="width:100%;"></div><label style="display:flex; align-items:center; gap:8px; margin:8px 0;"><input type="checkbox" id="ativo_fornecedor" checked> Ativo</label></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalFornecedor()">Cancelar</button>
+                <button type="submit" class="btn">Salvar Fornecedor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Registrar Ocorrência (Problemas) -->
+<div id="modalOcorrencia" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h2 style="margin-bottom: 15px;">Registrar Problema com Fornecedor</h2>
+        <form id="formOcorrencia" onsubmit="submitOcorrenciaFornecedor(event)">
+            <input type="hidden" id="ocorrencia_fornecedor_id">
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label>Tipo de Ocorrência</label>
+                <select id="ocorrencia_tipo" required style="width: 100%;">
+                    <option value="">Selecione o problema...</option>
+                    <option value="Atraso">Atraso na Entrega</option>
+                    <option value="Defeito">Defeito de Qualidade / Peça</option>
+                    <option value="Divergencia">Divergência de Quantidade</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Descrição Detalhada</label>
+                <textarea id="ocorrencia_descricao" rows="4" placeholder="Descreva o ocorrido..." required style="width: 100%; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalOcorrencia()">Cancelar</button>
+                <button type="submit" class="btn">Registrar Ocorrência</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Novo Pedido Direto (PO) -->
+<div id="modalNovoPO" class="modal">
+    <div class="modal-content">
+        <h2>Novo Pedido Direto (PO)</h2>
+        <form id="formNovoPO" onsubmit="submitNovoPO(event)">
+            <div class="form-group po-autocomplete"><label for="novo_po_item">Item / Material</label><div style="display:flex; gap:8px; align-items:flex-start;"><input type="text" id="novo_po_item" style="width: 100%;" autocomplete="off" placeholder="Busque por código ou descrição..."><button type="button" class="btn btn-outline" onclick="abrirCadastroItemAPartirDoPO()" title="Cadastrar novo item">+ Cadastrar item</button></div><div id="novo-po-item-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <div class="form-group"><label>Valor Total (R$)</label><input type="number" step="0.01" id="novo_po_valor" style="width: 100%;"></div>
+            <div class="form-group">
+                <label>Itens do pedido</label>
+                <div id="itens-pedido-direto-list"></div>
+                <button type="button" class="btn btn-outline" onclick="adicionarLinhaItemPedidoDireto()" style="margin-top: 8px;">+ Adicionar item</button>
+            </div>
+            <div class="form-group po-autocomplete"><label for="novo_po_fornecedor">Fornecedor</label><input type="text" id="novo_po_fornecedor" required style="width: 100%;" autocomplete="off" placeholder="Busque por nome, código ou CNPJ..."><div id="novo-po-fornecedor-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <div class="form-group"><label>Prazo de Entrega (Dias)</label><input type="number" id="novo_po_prazo" value="7" min="0" required style="width: 100%;"></div>
+            <div class="form-group"><label>Status Inicial</label>
+                <select id="novo_po_status" style="width: 100%;">
+                    <option value="gerado">Gerado</option>
+                    <option value="transito">Realizado (Em Trânsito)</option>
+                    <option value="entregue">Concluído</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalNovoPO()">Cancelar</button>
+                <button type="submit" class="btn">Criar Pedido</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalEditarPO" class="modal">
+    <div class="modal-content">
+        <h2>Editar Pedido Gerado (PO)</h2>
+        <form id="formEditarPO" onsubmit="submitEditarPO(event)">
+            <input type="hidden" id="editar_po_id">
+            <div class="form-group"><label for="editar_po_item">Item / Material</label><input type="text" id="editar_po_item" required style="width: 100%;" autocomplete="off"></div>
+            <div class="form-group"><label for="editar_po_fornecedor">Fornecedor</label><input type="text" id="editar_po_fornecedor" required style="width: 100%;" autocomplete="off"></div>
+            <div class="form-group"><label>Valor Total (R$)</label><input type="number" step="0.01" id="editar_po_valor" required style="width: 100%;"></div>
+            <div class="form-group"><label>Prazo de Entrega (Dias)</label><input type="number" id="editar_po_prazo" min="0" required style="width: 100%;"></div>
+            <div class="form-group"><label>Status</label>
+                <select id="editar_po_status" style="width: 100%;">
+                    <option value="gerado">Gerado</option>
+                    <option value="transito">Em Trânsito</option>
+                    <option value="aprovado">Aprovado</option>
+                    <option value="entregue">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalEditarPO()">Cancelar</button>
+                <button type="submit" class="btn">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Novo Material MRP -->
+<div id="modalNovoMRP" class="modal">
+    <div class="modal-content">
+        <h2>Cadastrar Novo Produto (MRP)</h2>
+        <form id="formNovoMRP" onsubmit="submitNovoMRP(event)">
+            <div class="form-group"><label for="novo_mrp_produto_nome">Nome do produto</label><input type="text" id="novo_mrp_produto_nome" required maxlength="150" style="width: 100%;"></div>
+            <div class="form-group"><label for="novo_mrp_cliente">Cliente</label><input type="text" id="novo_mrp_cliente" maxlength="150" style="width: 100%;"></div>
+            <div class="form-group mrp-item-reference"><label for="novo_mrp_item_busca">Material utilizado</label><input type="text" id="novo_mrp_item_busca" required autocomplete="off" placeholder="Busque por código ou descrição..." style="width: 100%;"><input type="hidden" id="novo_mrp_item_id"><div id="novo-mrp-item-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <input type="hidden" id="novo_mrp_nome">
+            <div class="form-group"><label>Estoque Atual</label><input type="number" step="any" id="novo_mrp_estoque" value="0" required style="width: 100%;"></div>
+            <div class="form-group"><label>Demanda de Peças</label><input type="number" step="any" id="novo_mrp_demanda" value="0" required style="width: 100%;"></div>
+            <div class="form-group"><label>Consumo por Peça</label><input type="number" step="any" id="novo_mrp_consumo" value="0.165" required style="width: 100%;"></div>
+            <div class="form-group"><label>Comprado / Recebido</label><input type="number" step="any" id="novo_mrp_comprado" value="0" required style="width: 100%;"></div>
+            <label class="mrp-demillus-option"><input type="checkbox" id="novo_mrp_demillus"> Material Demillus</label>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalNovoMRP()">Cancelar</button>
+                <button type="submit" class="btn">Salvar Material</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Material MRP -->
+<div id="modalEditMRP" class="modal">
+    <div class="modal-content">
+        <h2>Editar Produto (MRP)</h2>
+        <form id="formEditMRP" onsubmit="submitEditMRP(event)">
+            <input type="hidden" id="edit_mrp_id">
+            <div class="form-group"><label for="edit_mrp_produto_nome">Nome do produto</label><input type="text" id="edit_mrp_produto_nome" required maxlength="150" style="width: 100%;"></div>
+            <div class="form-group"><label for="edit_mrp_cliente">Cliente</label><input type="text" id="edit_mrp_cliente" maxlength="150" style="width: 100%;"></div>
+            <div class="form-group mrp-item-reference"><label for="edit_mrp_item_busca">Material utilizado</label><input type="text" id="edit_mrp_item_busca" required autocomplete="off" placeholder="Busque por código ou descrição..." style="width: 100%;"><input type="hidden" id="edit_mrp_item_id"><div id="edit-mrp-item-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <input type="hidden" id="edit_mrp_nome">
+            <div class="form-group"><label>Estoque Atual</label><input type="number" step="any" id="edit_mrp_estoque" required style="width: 100%;"></div>
+            <div class="form-group"><label>Demanda de Peças</label><input type="number" step="any" id="edit_mrp_demanda" required style="width: 100%;"></div>
+            <div class="form-group"><label>Consumo por Peça</label><input type="number" step="any" id="edit_mrp_consumo" required style="width: 100%;"></div>
+            <div class="form-group"><label>Comprado / Recebido</label><input type="number" step="any" id="edit_mrp_comprado" required style="width: 100%;"></div>
+            <label class="mrp-demillus-option"><input type="checkbox" id="edit_mrp_demillus"> Material Demillus</label>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalEditMRP()">Cancelar</button>
+                <button type="submit" class="btn">Atualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Nova Demanda MRP -->
+<div id="modalNovoPedidoMRP" class="modal">
+    <div class="modal-content">
+        <h2>Novo pedido</h2>
+        <p class="pedido-mrp-subtitulo">Selecione os materiais que este pedido vai atender e informe a quantidade de peças para cada um.</p>
+        <form id="formNovoPedidoMRP" onsubmit="submitNovoPedidoMRP(event)">
+            <div class="form-group"><label for="pedido_mrp_produto_input">Produto</label><div class="item-search"><input id="pedido_mrp_produto_input" autocomplete="off" placeholder="Busque por produto..." required style="width: 100%;"><div id="pedido-mrp-produto-suggestions" class="item-suggestions" role="listbox"></div></div></div>
+            <input type="hidden" id="pedido_mrp_material_id">
+            <div class="form-group" id="pedido-mrp-materiais-group" style="display:none;"><div class="pedido-mrp-materiais-cabecalho"><label>Materiais deste produto</label><span id="pedido-mrp-selecao-resumo">0 selecionados</span></div><div id="pedido-mrp-materiais-lista"></div></div>
+            <div class="form-group" style="display:none;"><label>Material utilizado</label><input type="text" id="pedido_mrp_material" readonly style="width: 100%;"></div>
+            <div class="form-group" style="display:none;"><label>Consumo por peça</label><input type="number" step="any" id="pedido_mrp_consumo" readonly style="width: 100%;"></div>
+            <div class="form-group" style="display:none;"><label>Quantidade de peças</label><input type="number" step="any" min="0.01" id="pedido_mrp_quantidade" style="width: 100%;"></div>
+            <div class="form-group" style="display:none;"><label>Consumo total</label><input type="number" step="any" id="pedido_mrp_consumo_total" readonly style="width: 100%;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalNovoPedidoMRP()">Cancelar</button>
+                <button type="submit" class="btn">Adicionar pedido</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Compra Parcial do MRP (Estilizado) -->
+<div id="modalCompraParcialMRP" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <h2 style="margin-bottom: 10px; font-size: 1.2rem;">Gerar Solicitação de Compra (SC)</h2>
+        <p id="parcial-mrp-subtitulo" style="font-size: 0.85rem; color: var(--text-body); margin-bottom: 20px; line-height: 1.4;"></p>
+        
+        <form id="formCompraParcial" onsubmit="confirmarGerarSCParcial(event)">
+            <input type="hidden" id="parcial_mrp_id">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Quantidade Desejada</label>
+                <input type="number" step="any" id="parcial_mrp_qtd" required style="width: 100%; font-size: 1rem; padding: 10px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalCompraParcial()">Cancelar</button>
+                <button type="submit" class="btn">Gerar SC</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Registrar Compra MRP -->
+<div id="modalCompraMRP" class="modal">
+    <div class="modal-content" style="max-width: 460px;">
+        <h2 id="tituloModalCompraMRP">Registrar compra</h2>
+        <form id="formCompraMRP" onsubmit="salvarCompraMRP(event)">
+            <input type="hidden" id="compra_mrp_id">
+            <p id="compra-mrp-material" style="color: var(--text-body); margin-bottom: 16px;"></p>
+            <div class="form-group" id="compra-mrp-modo-group"><label>Tipo de compra</label><div style="display:flex; gap:16px;"><label><input type="radio" name="compra_mrp_modo" value="individual" checked onchange="alternarModoCompraMRP()"> Individual</label><label><input type="radio" name="compra_mrp_modo" value="conjunta" onchange="alternarModoCompraMRP()"> Juntar produtos</label></div></div>
+            <div class="form-group"><label for="compra_mrp_data">Data da compra</label><input type="date" id="compra_mrp_data" required style="width: 100%;"></div>
+            <div class="form-group"><label for="compra_mrp_quantidade">Quantidade</label><input type="number" step="any" min="0.01" id="compra_mrp_quantidade" required style="width: 100%;"></div>
+            <div id="compra-mrp-conjunta-lista" class="form-group" style="display:none;"><label>Produtos com o mesmo material</label><div id="compra-mrp-produtos"></div></div>
+            <div id="compra-mrp-pedidos" class="form-group"><label>Pedidos incluídos nesta compra</label><div id="compra-mrp-pedidos-lista"></div></div>
+            <div class="form-group po-autocomplete"><label for="compra_mrp_fornecedor">Fornecedor</label><input type="text" id="compra_mrp_fornecedor" required autocomplete="off" placeholder="Busque por nome, código ou CNPJ..." style="width: 100%;"><div id="compra-mrp-fornecedor-suggestions" class="item-suggestions" role="listbox"></div></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="fecharCompraMRP()">Cancelar</button><button type="submit" class="btn" id="botaoSalvarCompraMRP">Registrar compra</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Registrar Recebimento MRP -->
+<div id="modalReceberCompraMRP" class="modal">
+    <div class="modal-content" style="max-width: 460px;">
+        <h2>Receber compra</h2>
+        <form id="formReceberCompraMRP" onsubmit="salvarRecebimentoMRP(event)">
+            <input type="hidden" id="receber_mrp_id"><input type="hidden" id="receber_compra_id">
+            <p id="receber-mrp-detalhes" style="color: var(--text-body); margin-bottom: 16px;"></p>
+            <div class="form-group"><label for="receber_mrp_data">Data do recebimento</label><input type="date" id="receber_mrp_data" required style="width: 100%;"></div>
+            <div class="form-group"><label for="receber_mrp_quantidade">Quantidade recebida</label><input type="number" step="any" min="0.01" id="receber_mrp_quantidade" required style="width: 100%;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="fecharRecebimentoMRP()">Cancelar</button><button type="submit" class="btn">Confirmar recebimento</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Agendar Rota Motorista -->
+<div id="modalNovaRota" class="modal">
+    <div class="modal-content">
+        <h2 id="tituloModalRota">Agendar Rota de Coleta</h2>
+        <form id="formNovaRota" onsubmit="submitNovaRota(event)">
+            <input type="hidden" id="rota_edit_id">
+            <div class="form-group"><label>Data Prevista</label><input type="date" id="rota_data" required style="width: 100%;"></div>
+            <div class="form-group"><label>Motorista Responsável</label><input type="text" id="rota_motorista" required style="width: 100%;"></div>
+            <div class="form-group"><label>Destino / Fornecedor</label><input type="text" id="rota_destino" required style="width: 100%;"></div>
+            <div class="form-group"><label>Endereço</label><input type="text" id="rota_endereco" placeholder="Rua, número, bairro, cidade/UF" style="width: 100%;"></div>
+            <div class="form-group"><label>Localização no mapa (opcional)</label><input type="url" id="rota_localizacao_mapa" placeholder="Cole o link do Google Maps ou deixe vazio para gerar pelo endereço" style="width: 100%;"><small class="field-hint">O sistema abrirá essa localização no GPS do motorista.</small></div>
+            <div class="form-group"><label>Referência (PO ou SC)</label><input type="text" id="rota_po" placeholder="Ex: PO-501" style="width: 100%;"></div>
+            <div class="form-group"><label>Observações</label><input type="text" id="rota_obs" placeholder="Ex: Coletar até às 14h" style="width: 100%;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalNovaRota()">Cancelar</button>
+                <button type="submit" class="btn" id="botaoSalvarRota">Agendar Rota</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- === MODAL DETALHES TIPO TRELLO === -->
+<div id="modalDetalhesCartao" class="modal z-[1200]">
+    <div class="modal-content modal-detalhes-cartao-content w-[min(1100px,92vw)] max-h-[90vh] overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
+            <h2 id="detalhes-titulo" class="m-0 flex items-center gap-2 text-lg font-semibold text-slate-900">Detalhes do Cartão</h2>
+            <button class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-xl font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900" type="button" onclick="closeModalDetalhes()" aria-label="Fechar detalhes">&times;</button>
+        </div>
+
+        <div class="grid gap-5 p-4 md:grid-cols-[1.6fr_0.9fr] md:p-5">
+            <div class="space-y-5">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">📋</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Itens e detalhes do pedido</strong>
+                    </div>
+                    <div id="detalhes-body" class="space-y-3 text-sm leading-6 text-slate-600">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">💬</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Histórico e Comentários</strong>
+                    </div>
+                    <div class="relative mt-3 flex items-center gap-2">
+                        <input type="text" id="novo-comentario" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Escreva um comentário (pressione Enter para enviar)..." onkeypress="if(event.key === 'Enter'){adicionarComentario();}">
+                        <div class="group relative flex-shrink-0">
+                            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-700 hover:bg-indigo-50" aria-label="Ver comandos de comentário">?</button>
+                            <div class="pointer-events-none absolute right-0 top-full z-20 mt-2 hidden w-72 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl group-hover:block group-focus-within:block">
+                                <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Comandos</div>
+                                <ul class="space-y-1.5 text-xs leading-5 text-slate-600">
+                                    <li><strong class="font-semibold text-slate-800">/previsão DD/MM/AAAA</strong> — define a previsão de entrega.</li>
+                                    <li><strong class="font-semibold text-slate-800">/add "código"</strong> — adiciona um item à solicitação.</li>
+                                    <li><strong class="font-semibold text-slate-800">/remove "código"</strong> — remove um item da solicitação.</li>
+                                    <li><strong class="font-semibold text-slate-800">/receber "código"</strong> — conclui o item recebido.</li>
+                                    <li><strong class="font-semibold text-slate-800">/receber "código1" "código2"</strong> — conclui vários itens.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button class="btn" type="button" style="padding: 0.6rem 1rem; font-size: 0.8rem;" onclick="adicionarComentario()">Enviar</button>
+                    </div>
+                    <div id="lista-comentarios" class="mt-3 max-h-[250px] overflow-y-auto space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <!-- Preenchido via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <aside class="space-y-4">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">⚙️</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Ações e Transições</strong>
+                    </div>
+                    <div id="modal-footer-actions" class="flex flex-wrap gap-3">
+                        <!-- Botões preenchidos via JS -->
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">🏷️</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Etiquetas (Tags)</strong>
+                    </div>
+                    <div id="detalhes-etiquetas" class="mb-3 flex flex-wrap gap-2"></div>
+                    <button class="btn btn-outline inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800" type="button" onclick="adicionarEtiqueta()">
+                        <span aria-hidden="true">⚠️</span>
+                        <span>Adicionar Emergência</span>
+                    </button>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">📎</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Anexos e Arquivos</strong>
+                    </div>
+                    <div id="lista-anexos" class="mb-3 space-y-2"></div>
+                    <div class="space-y-2">
+                        <label for="novo-anexo-file" class="anexo-selecao-arquivo">
+                            <span class="anexo-selecao-icone" aria-hidden="true">↑</span>
+                            <span id="novo-anexo-nome">Selecionar arquivo</span>
+                            <span class="anexo-selecao-ajuda">PDF, imagem ou documento</span>
+                        </label>
+                        <input type="file" id="novo-anexo-file" class="sr-only">
+                        <button class="btn btn-outline w-full rounded-xl px-3 py-2 text-xs font-semibold transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700" type="button" onclick="addAnexoModal()">Subir Arquivo</button>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div class="mb-3 flex items-center gap-2">
+                        <span aria-hidden="true" class="text-base">🔗</span>
+                        <strong class="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Rastreabilidade do processo</strong>
+                    </div>
+                    <div id="detalhes-rastreabilidade" class="rastreabilidade-timeline rastreabilidade-scroll mb-0 max-h-[600px] overflow-y-auto">
+                        <span class="text-xs text-slate-500">Carregando fluxo...</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<!-- Modal CRUD de Usuários -->
+<div id="modalAlterarSenha" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h2 style="margin-bottom: 15px;">Alterar minha senha</h2>
+        <form id="formAlterarSenha" onsubmit="submitAlterarSenha(event)">
+            <div class="form-group"><label for="senha-atual">Senha atual</label><input type="password" id="senha-atual" autocomplete="current-password" required style="width: 100%;"></div>
+            <div class="form-group"><label for="nova-senha">Nova senha</label><input type="password" id="nova-senha" minlength="6" autocomplete="new-password" required style="width: 100%;"></div>
+            <div class="form-group"><label for="confirmacao-senha">Confirmar nova senha</label><input type="password" id="confirmacao-senha" minlength="6" autocomplete="new-password" required style="width: 100%;"></div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalAlterarSenha()">Cancelar</button>
+                <button type="submit" class="btn">Alterar senha</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal CRUD de Usuários -->
+<div id="modalNivel" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloModalNivel">
+    <div class="modal-content nivel-modal-content">
+        <h2 id="tituloModalNivel">Gerenciar níveis de acesso</h2>
+        <form id="formNivel" onsubmit="salvarNivel(event)">
+            <input type="hidden" id="nivel_id">
+            <div class="form-group"><label for="nivel_nome">Nome do nível</label><input id="nivel_nome" maxlength="50" pattern="[a-zA-Z0-9_-]{2,50}" placeholder="ex.: financeiro" required></div>
+            <fieldset class="nivel-permissoes"><legend>Páginas permitidas</legend><div id="nivel-permissoes-lista"></div></fieldset>
+            <div class="nivel-modal-acoes"><button type="button" class="btn btn-outline" onclick="closeModalNivel()">Cancelar</button><button type="submit" class="btn">Salvar nível</button></div>
+        </form>
+        <div class="nivel-existentes"><h3>Níveis existentes</h3><div id="niveis-existentes-lista"></div></div>
+    </div>
+</div>
+
+<!-- Modal CRUD de Usuários -->
+<div id="modalUsuario" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h2 id="modal-usuario-titulo" style="margin-bottom: 15px;">Novo Usuário</h2>
+        <form id="formUsuario" onsubmit="submitFormUsuario(event)">
+            <input type="hidden" id="usuario_db_id">
+            <div class="form-group"><label>Nome</label><input type="text" id="usuario_nome" required style="width: 100%;"></div>
+            <div class="form-group"><label>E-mail</label><input type="email" id="usuario_email" required style="width: 100%;"></div>
+            <div class="form-group"><label>Senha <span id="label-senha-aviso" style="font-size:0.75rem;">(Vazio para manter)</span></label><input type="password" id="usuario_senha" style="width: 100%;"></div>
+            <div class="form-group"><label>Perfil de Acesso</label>
+                <select id="usuario_perfil" required style="width: 100%;">
+                    <option value="solicitante">Solicitante</option>
+                    <option value="estoque">Estoque (Visualização de Calendário)</option>
+                    <option value="comercial">Comercial</option>
+                    <option value="comprador">Comprador</option>
+                    <option value="gerente">Gerente</option>
+                    <option value="admin">Gestor / Admin</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModalUsuario()">Cancelar</button>
+                <button type="submit" class="btn">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal do Calendário Geral -->
+<div id="modalCalendarioGeral" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">📅 Calendário de Entregas</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn btn-outline" style="padding: 4px 10px;" onclick="mudarMesCalendario(-1)">◀ Anterior</button>
+                <strong id="calendario-mes-ano" style="font-size: 1.1rem; color: var(--text-title); min-width: 130px; text-align: center;">Mês Ano</strong>
+                <button class="btn btn-outline" style="padding: 4px 10px;" onclick="mudarMesCalendario(1)">Próximo ▶</button>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-weight: bold; margin-bottom: 8px; color: var(--text-body); font-size: 0.85rem;">
+            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+        </div>
+        <div id="calendario-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; grid-auto-rows: minmax(70px, auto);">
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-outline" onclick="fecharCalendarioGeral()">Fechar Calendário</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal da Lista de Pedidos de um Dia Específico -->
+<div id="modalListaDia" class="modal" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 id="titulo-lista-dia" style="margin: 0;">Entregas do Dia</h2>
+            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem;" onclick="fecharListaDia()">Fechar</button>
+        </div>
+        <div id="conteudo-lista-dia" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;">
+        </div>
+    </div>
+</div>
+
+<div id="modalItem" class="modal">
+    <div class="modal-content" style="max-width: 620px;">
+        <h2 id="tituloModalItem">Novo Item</h2>
+        <form id="formItem" onsubmit="submitItem(event)">
+            <input type="hidden" id="item_edit_id">
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px;"><div class="form-group"><label>Nº do item <small style="color:var(--text-body);">(automático, editável)</small></label><input type="text" id="item_codigo" required style="width:100%;"></div><div class="form-group"><label>Descrição do item</label><input type="text" id="item_descricao" required style="width:100%;"></div></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"><div class="form-group"><label>Em estoque</label><input type="number" step="any" id="item_estoque" value="0" style="width:100%;"></div><div class="form-group"><label>Unidade</label><input type="text" id="item_unidade" value="UN" style="width:100%;"></div><div class="form-group"><label>Grupo de itens</label><input type="text" id="item_grupo" style="width:100%;"></div><div class="form-group"><label>Fabricante</label><input type="text" id="item_fabricante" style="width:100%;"></div><div class="form-group"><label>Último preço de compra</label><input type="text" id="item_preco" placeholder="Ex: 2,33" style="width:100%;"></div></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="closeModalItem()">Cancelar</button><button type="submit" class="btn">Salvar Item</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modalImportacaoItens" class="modal">
+    <div class="modal-content"><h2>Importar itens do Excel</h2><p style="color:var(--text-body); font-size:.85rem;">Use o modelo com as colunas da imagem, incluindo estoque e último preço de compra.</p><p><a class="btn btn-outline" href="/api/v1/itens/modelo">📄 Baixar modelo Excel</a></p><form id="formImportacaoItens" onsubmit="submitImportacaoItens(event)"><div class="form-group"><label>Arquivo .xlsx</label><input type="file" id="arquivo_itens" accept=".xlsx" required style="width:100%;"></div><div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="closeImportacaoItens()">Cancelar</button><button type="submit" class="btn">Importar</button></div></form></div>
+</div>
+
+<div id="modalImportacaoFornecedores" class="modal">
+    <div class="modal-content"><h2>Importar fornecedores do Excel</h2><p style="color:var(--text-body); font-size:.85rem;">A planilha deve conter: RAZÃO SOCIAL, NOME FANTASIA, CÓDIGO, CNPJ, UF, CIDADE e Ativo.</p><p><a class="btn btn-outline" href="/api/v1/fornecedores/modelo">📄 Baixar modelo Excel</a></p><form id="formImportacaoFornecedores" onsubmit="submitImportacaoFornecedores(event)"><div class="form-group"><label>Arquivo Excel (.xls, .xlsx ou .xlsm)</label><input type="file" id="arquivo_fornecedores" accept=".xls,.xlsx,.xlsm" required style="width:100%;"></div><div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="closeImportacaoFornecedores()">Cancelar</button><button type="submit" class="btn">Importar</button></div></form></div>
+</div>
+
+<div id="modalDetalhesRotaConsulta" class="modal">
+    <div class="modal-content" style="max-width:560px;">
+        <h2 id="rota-consulta-titulo">Detalhes da Rota</h2>
+        <div id="rota-consulta-conteudo" style="display:grid; gap:10px; color:var(--text-body);"></div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="fecharDetalhesRotaConsulta()">Fechar</button><button type="button" class="btn" id="rota-consulta-mapa" style="display:none;">📍 Abrir GPS</button></div>
+    </div>
+</div>
+
+<div id="modalEnvioAgenda" class="modal" role="dialog" aria-modal="true" aria-labelledby="envio-agenda-titulo">
+    <div class="modal-content agenda-modal-content">
+        <h2 id="envio-agenda-titulo">Enviar anotação</h2>
+        <p class="agenda-envio-ajuda">Selecione um ou mais usuários que poderão visualizar esta anotação.</p>
+        <form onsubmit="salvarEnvioAgenda(event)">
+            <input type="hidden" id="envio-agenda-id">
+            <div class="form-group"><label for="envio-agenda-observacao">Observação para o destinatário</label><textarea id="envio-agenda-observacao" rows="3" maxlength="1000" placeholder="Inclua uma orientação ou contexto para esta anotação..."></textarea></div>
+            <div id="envio-agenda-usuarios" class="agenda-destinatarios-lista"></div>
+            <div class="agenda-modal-acoes"><button type="button" class="btn btn-outline" onclick="fecharEnvioAgenda()">Cancelar</button><button type="submit" class="btn">Enviar</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modalCartaoMensagemAgenda" class="modal" role="dialog" aria-modal="true" aria-labelledby="agenda-cartao-titulo">
+    <div class="modal-content agenda-cartao-mensagem">
+        <div class="agenda-cartao-cabecalho"><div><span class="agenda-eyebrow">Mensagem recebida</span><h2 id="agenda-cartao-titulo">Mensagem da agenda</h2></div><button type="button" class="btn btn-outline modal-fechar-icone" onclick="fecharCartaoMensagemAgenda()" aria-label="Fechar mensagem">&times;</button></div>
+        <div class="agenda-cartao-info" id="agenda-cartao-info"></div>
+        <section><h3>Comentários</h3><div id="agenda-cartao-comentarios" class="agenda-cartao-comentarios"></div></section>
+        <section><h3>Rastreabilidade</h3><div id="agenda-cartao-rastreabilidade" class="agenda-cartao-rastreabilidade"></div></section>
+    </div>
+</div>
+
+<div id="modalPedidoComercial" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloPedidoComercial">
+    <div class="modal-content comercial-modal-content">
+        <h2 id="tituloPedidoComercial">Novo pedido comercial</h2>
+        <form id="formPedidoComercial" onsubmit="salvarPedidoComercial(event)">
+            <input type="hidden" id="comercial_pedido_id">
+            <div class="comercial-form-grid"><div class="form-group"><label for="comercial_cliente">Nome do cliente</label><input id="comercial_cliente" required maxlength="150"></div><div class="form-group"><label for="comercial_data">Data do pedido</label><input type="date" id="comercial_data" required></div><div class="form-group"><label for="comercial_sap">Pedido SAP</label><input id="comercial_sap" required maxlength="50"></div></div>
+            <div class="comercial-itens-area">
+                <div class="comercial-itens-header">
+                    <label>Produtos do pedido</label>
+                    <button type="button" class="btn btn-outline btn-small" onclick="adicionarLinhaProdutoComercial()">+ Adicionar produto</button>
+                </div>
+                <div id="comercial-itens-lista" class="comercial-itens-lista"></div>
+            </div>
+            <div class="form-group">
+                <label for="comercial_valor_total">Valor total do pedido</label>
+                <input id="comercial_valor_total" readonly value="R$ 0,00">
+            </div>
+            <div class="form-group">
+                <label for="comercial_resumo">Resumo do pedido</label>
+                <textarea id="comercial_resumo" rows="3" placeholder="Resumo geral com itens, quantidades e valor total"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="comercial_observacoes">Observações do pedido</label>
+                <textarea id="comercial_observacoes" rows="3" placeholder="Observações gerais do pedido"></textarea>
+            </div>
+            <div class="comercial-modal-acoes"><button type="button" class="btn btn-outline" onclick="fecharModalPedidoComercial()">Cancelar</button><button type="submit" class="btn">Salvar pedido</button></div>
+        </form>
+    </div>
+</div>
+
+<div id="modalPreviewImagemComercial" class="modal" role="dialog" aria-modal="true" aria-labelledby="tituloPreviewImagemComercial">
+    <div class="modal-content modal-imagem-preview-content">
+        <div class="modal-imagem-preview-header">
+            <h2 id="tituloPreviewImagemComercial">Visualização da imagem</h2>
+            <button type="button" class="btn btn-outline modal-fechar-icone" onclick="fecharPreviewImagemComercial()" aria-label="Fechar visualização">&times;</button>
+        </div>
+        <div class="modal-imagem-preview-body">
+            <img id="modalPreviewImagemComercialImg" src="" alt="Prévia da imagem do produto">
+        </div>
+    </div>
+</div>
+
+<div id="modalImportacaoMRP" class="modal">
+    <div class="modal-content" style="max-width: 620px;">
+        <h2>Importar planilha do MRP</h2>
+        <p style="color:var(--text-body); font-size:.85rem;">O arquivo deve conter as abas de planejamento. Os dados do resumo e todas as linhas de cada aba serão associados ao histórico dos materiais.</p>
+        <form id="formImportacaoMRP" onsubmit="submitImportacaoMRP(event)">
+            <div class="form-group"><label for="arquivo_mrp">Arquivo Excel (.xlsx ou .xlsm)</label><input type="file" id="arquivo_mrp" accept=".xlsx,.xlsm" required style="width:100%;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;"><button type="button" class="btn btn-outline" onclick="fecharImportacaoMRP()">Cancelar</button><button type="submit" class="btn">Importar</button></div>
+        </form>
+    </div>
+</div>

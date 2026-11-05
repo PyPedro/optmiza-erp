@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmação de e-mail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <main class="login-wrapper" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <section class="login-right" style="max-width: 480px;">
+            <h2>{{ 'E-mail confirmado' if sucesso else 'Não foi possível confirmar' }}</h2>
+            <p>{{ mensagem }}</p>
+            <a class="btn-submit" href="{{ url_for('auth.login') }}" style="display: block; text-align: center; text-decoration: none;">Ir para o login</a>
+        </section>
+    </main>
+</body>
+</html>
